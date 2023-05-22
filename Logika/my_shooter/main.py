@@ -1,5 +1,5 @@
 from objects import *
-#
+
 pygame.init()
 
 pygame.draw.rect(win, background, UI)  # Малювання нижнього прямокутника для інтерфейсу
