@@ -1,0 +1,17 @@
+Index: Logika/my_shooter/main.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Logika/my_shooter/main.py b/Logika/my_shooter/main.py
+--- a/Logika/my_shooter/main.py	
++++ b/Logika/my_shooter/main.py	(date 1684785772433)
+@@ -14,7 +14,7 @@
+     """Зміна всіх значень до "по замовчуванню". Початкове налаштування гри"""
+     global finish, player, scores, enemys, boss_round
+ 
+-    player = Player(rocket_image, 350, 250, 50, 50, 6)  # Гравець
++    player = Player(rocket_image, 350, 250, 50, 50, 5)  # Гравець
+ 
+     pygame.mixer.music.play(100)  # Ввімкнути фонову музику
+     scores = 0  # Рахунок (монети)
