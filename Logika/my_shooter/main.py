@@ -4,16 +4,19 @@ import database as db  # Імпорт бази данних
 pygame.init()
 
 pygame.draw.rect(win, background, UI)  # Малювання нижнього прямокутника для інтерфейсу
-win.blit(background_image, (0, 0))  # Малювання фону
+win.blit(main_screen_image, (0, 0))  # Малювання фону
 
-bt_text = ui_font.render("Start", True, (100, 255, 255))  # Текст кнопки
+bt_start_text = ui_font.render("Start", True, (100, 255, 255))  # Текст кнопки
+bt_shop_text = ui_font.render("Shop", True, (100, 255, 255))  # Текст кнопки
+bt_exit_to_menu_text = ui_font.render("Exit to menu", True, (100, 255, 255))  # Текст кнопки
+
 
 finish = True  # Гра не почата одразу
 pause = False  # Прапорець паузи
 
-def callback():  # Функція яка викликається при натиску на кнопку Start
+def callback_start():  # Функція яка викликається при натиску на кнопку Start
     """Зміна всіх значень до "по замовчуванню". Початкове налаштування гри"""
-    global finish, player, scores, enemys, boss_round
+    global finish, player, scores, enemys, boss_round, game
 
     player = Player(rocket_image, 350, 250, 50, 50, 5)  # Гравець
 
@@ -23,17 +26,40 @@ def callback():  # Функція яка викликається при нат�
 
     finish = False
     boss_round = False
+    game = True
 
-    for i in range(10):  # Створення ворогів
+    for i in range(15):  # Створення ворогів
         enemy = Enemy(random.choice(asteroid_images), 100, 100, 50, 50, 2)
         enemy.spawn()
         enemys.add(enemy)
 
+def callback_shop():
+    global shop, finish, balance, game
+    shop = True
+    finish = False
+    game = False
+    balance = db.get_balance()
 
-bt = Button(win_width / 2, 100, 100, 50, (50, 50, 100), bt_text, callback=callback)  # Кнопка Start
+def callback_to_menu():
+    global shop, finish, balance, game
+    pygame.draw.rect(win, background, UI)
+    win.blit(main_screen_image, (0, 0))  # Малювання фону
+    shop = False
+    finish = True
+    game = False
+
+
+bt_start = Button(win_width / 2, 100, 100, 50, (50, 50, 100), bt_start_text, callback=callback_start)  # Кнопка Start
+bt_shop = Button(win_width / 2, 170, 100, 50, (50, 50, 100), bt_shop_text, callback=callback_shop)  # Кнопка Start
+
+menu_buttons.add(*(bt_start, bt_shop))
+
+bt_exit_to_menu = Button(130, win_height, 220, 50, (50, 50, 100), bt_exit_to_menu_text, callback=callback_to_menu)
 
 boss_round = False  # Предіод коли на єкрані є міні-бос
 level = 1  # Лічільник складності
+game = False
+shop = False
 
 while True:
     """Основний цикл"""
@@ -50,9 +76,11 @@ while True:
                     pygame.mixer.music.unpause()
 
     if finish:
-        bt.update()  # Оновлення кнопки, якщо гра не почата
-        bt.draw()
-    elif not pause:  # Якщо гра почата та не в паузі
+        for button in menu_buttons:  # Оновлення кнопок, якщо гра не почата
+            button.update()
+            button.draw()
+
+    elif not pause and game:  # Якщо гра почата та не в паузі
         win.blit(background_image, (0, 0))  # Фон
 
         for enemy in enemys:  # оновлення ворогів
@@ -111,10 +139,15 @@ while True:
             """Ускладнення гри (підняття рівня). Кожні 30 балів"""
             scores += 1  # Додання 1 бала, для того щоб умова не спрацьовувала декілька раз (винагорода за рівень)
             level += 1  # Підвищення рівня
+            levelup_sounds.play()
+            if level >= 4:
+                enemy = Enemy(random.choice(asteroid_images), 100, 100, 50, 50, 2)
+                enemy.spawn()
+                enemys.add(enemy)
             for enemy in enemys:  # Ускладнення кожного ворога
                 if enemy.max_hp != 15:  # Додаємо +1 до макс здоров'я всім окрім міні-боса
                     enemy.max_hp += 1
-                if level >= 6:  # На 6му рівні підвищуємо швидкість
+                if level in [6, 9]:  # На 6му рівні підвищуємо швидкість
                     enemy.speed += 1
 
         pygame.draw.rect(win, background, UI)  # Малювання прямокутника інтерфейса (знизу)
@@ -143,16 +176,24 @@ while True:
             record_rect = record_text.get_rect(center=(win_width / 2, win_height - 50))  # Розташевання надпису посередні
 
             win.blit(record_text, record_rect)
+
+            db.update_balance(scores)  # Оновлення балансу
         else:
             """Текст поразки відображається ні місці тексту рівня.
             Тому малюємо рівень, тільки коли ще не програли"""
             level_text = ui_font.render(f"Level: {level}", True, (200, 200, 200))
             win.blit(level_text, (280, win_height + 5))
 
-    else:  # Якщо ми на паузі
+    elif pause:  # Якщо ми на паузі
         pygame.draw.rect(win, background, UI)  # замальовуємо інтерфейс (очищаємо)
         pause_text = ui_font.render("Pause", True, (200, 200, 200))
         win.blit(pause_text, (290, win_height + 5))
+
+    elif shop:
+        win.fill(background)
+        bt_exit_to_menu.draw()
+        bt_exit_to_menu.update()
+
 
     pygame.display.update()
     clock.tick(FPS)
