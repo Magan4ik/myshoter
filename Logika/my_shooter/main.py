@@ -1,4 +1,5 @@
 from objects import *
+import database as db  # Імпорт бази данних
 
 pygame.init()
 
@@ -134,6 +135,14 @@ while True:
             win.blit(lose_text, (250, win_height + 5))
             pygame.mixer.music.stop()
             death_sound.play()
+
+            '''Запис та вивід рекорду'''
+            db.add_result(scores)  # Додавання результату в таблицю
+            record_text = ui_font.render(f"The best result: {db.get_record()}", True, (100, 100, 255))  # Вивід найкращего результату за всі ігри
+
+            record_rect = record_text.get_rect(center=(win_width / 2, win_height - 50))  # Розташевання надпису посередні
+
+            win.blit(record_text, record_rect)
         else:
             """Текст поразки відображається ні місці тексту рівня.
             Тому малюємо рівень, тільки коли ще не програли"""
